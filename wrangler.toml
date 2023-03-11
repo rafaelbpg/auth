@@ -1,0 +1,8 @@
+name="hono-minimal"
+main="src/index.ts"
+
+compatibility_date = "2022-11-22"
+
+kv_namespaces = [
+  { binding = "USERS", id = "7b10effcb2e24469bd8f69f0a25377df", preview_id = "7b10effcb2e24469bd8f69f0a25377df" }
+]
