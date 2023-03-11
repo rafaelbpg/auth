@@ -2,9 +2,10 @@ import { v4 as v4_default } from 'uuid'
 import { HttpError } from '../errors/HttpError'
 import { Token } from '../types/Token';
 import { User } from '../types/User';
+import { Config } from '../Config';
 export class TokenService {
-    static TOKEN_STORAGE : string = 'tokens_'
-    static USER_TOKENS : string = 'user_tokens_'
+    static TOKEN_STORAGE : string = Config.TOKEN_STORAGE
+    static USER_TOKENS : string = Config.USER_TOKENS
     
     static async generateToken() : Promise<string> {
       return btoa(v4_default() + "-" + v4_default()).replace("=", "").replace("=", "");

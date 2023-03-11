@@ -3,7 +3,10 @@ import { HttpError } from '../errors/HttpError';
 import { Role } from '../types/Role';
 import { User } from '../types/User';
 import { TokenService } from './TokenService';
-
+import { Config } from '../Config';
+import RegisterUserFormRequestPayload from '../payloads/RegisterUserFormRequestPayload';
+import SigningUserFormRequestPayload from '../payloads/SigningUserFormRequestPayload';
+import { Token } from '../types/Token';
 const hashPassword = async (password : string) => {
     const encoder = new TextEncoder();
     const data = encoder.encode(password);
@@ -21,7 +24,9 @@ const verifyPassword = async (password : string, hash : string) => {
     return hashHex === hash;
 };
 export class UserServices {
-    static async registerUser(request, userNamespace) : Promise<User> {
+    static TOKEN_STORAGE : string = Config.TOKEN_STORAGE
+    static USER_TOKENS : string = Config.USER_TOKENS
+    static async registerUser(request: RegisterUserFormRequestPayload, userNamespace: KVNamespace) : Promise<User> {
       const { email = "", password = "", name = "" } = request;
       const uuid = v4_default();
       const activationCode = v4_default();
@@ -43,7 +48,7 @@ export class UserServices {
       await userNamespace.put(email, uuid);
       return user;
     }
-    static async activateUser(uuid, activationCode, userNamespace) {
+    static async activateUser(uuid: string, activationCode: string, userNamespace: KVNamespace): Promise<User> {
       const stringiffiedUser = await userNamespace.get(uuid);
       if (!stringiffiedUser) {
         const errorResponse2 = {
@@ -52,7 +57,7 @@ export class UserServices {
         };
         throw new HttpError(errorResponse2.message, errorResponse2.status);
       }
-      const user = JSON.parse(stringiffiedUser);
+      const user: User = JSON.parse(stringiffiedUser);
       if (user.isActive) {
         const errorResponse2 = {
           message: ["The user is already activated"],
@@ -71,7 +76,7 @@ export class UserServices {
       };
       throw new HttpError(errorResponse.message, errorResponse.status);
     }
-    static async singinByEmail(payload, userNamespace) {
+    static async singinByEmail(payload: SigningUserFormRequestPayload, userNamespace: KVNamespace): Promise<Token> {
       const userID = await userNamespace.get(payload.email);
       if (!userID) {
         const errorResponse = {
@@ -98,5 +103,11 @@ export class UserServices {
       }
       const token = await TokenService.registerANewTokenForUser(userID, userNamespace);
       return token;
+    }
+    static async whois(tokenString: string, userNamespace: KVNamespace): Promise<User | null>{      
+      const userID = await userNamespace.get(`${this.TOKEN_STORAGE}${tokenString}`);
+      const stringiffiedUser = await userNamespace.get(userID);
+      const user: User = JSON.parse(stringiffiedUser);
+      return user
     }
   };
